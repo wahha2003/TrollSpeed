@@ -7,3 +7,10 @@
 "Custom Offset" = "自定义偏移位置";
 
 "Uses Custom Offset" = "使用自定义偏移位置";
+
+"Date Display" = "日期显示";
+"Show Date" = "显示日期";
+"Date Font Size" = "日期字体大小";
+"Date Format" = "日期格式";
+"Date Offset X" = "日期偏移 X";
+"Date Offset Y" = "日期偏移 Y";

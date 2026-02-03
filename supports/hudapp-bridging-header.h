@@ -33,5 +33,10 @@ static HUDUserDefaultsKey const HUDUserDefaultsKeyRealCustomFontSize = @"realCus
 static HUDUserDefaultsKey const HUDUserDefaultsKeyUsesCustomOffset = @"usesCustomOffset";
 static HUDUserDefaultsKey const HUDUserDefaultsKeyRealCustomOffsetX = @"realCustomOffsetX";
 static HUDUserDefaultsKey const HUDUserDefaultsKeyRealCustomOffsetY = @"realCustomOffsetY";
+static HUDUserDefaultsKey const HUDUserDefaultsKeyShowsDate = @"showsDate";
+static HUDUserDefaultsKey const HUDUserDefaultsKeyDateFontSize = @"dateFontSize";
+static HUDUserDefaultsKey const HUDUserDefaultsKeyDateOffsetX = @"dateOffsetX";
+static HUDUserDefaultsKey const HUDUserDefaultsKeyDateOffsetY = @"dateOffsetY";
+static HUDUserDefaultsKey const HUDUserDefaultsKeyDateFormat = @"dateFormat";
 
 #endif /* hudapp_bridging_header_h */

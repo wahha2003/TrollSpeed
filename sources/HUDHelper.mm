@@ -222,6 +222,11 @@ NSUserDefaults *GetStandardUserDefaults(void)
             HUDUserDefaultsKeyRealCustomOffsetY: @0,
             HUDUserDefaultsKeyUsesCustomFontSize: @NO,
             HUDUserDefaultsKeyRealCustomFontSize: @9,
+            HUDUserDefaultsKeyShowsDate: @YES,
+            HUDUserDefaultsKeyDateFontSize: @10,
+            HUDUserDefaultsKeyDateOffsetX: @0,
+            HUDUserDefaultsKeyDateOffsetY: @0,
+            HUDUserDefaultsKeyDateFormat: @"yy.MM.dd.E",
         }];
     });
     return _userDefaults;
