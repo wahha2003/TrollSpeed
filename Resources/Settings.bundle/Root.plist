@@ -80,6 +80,78 @@
 			<key>MaximumValue</key>
 			<real>100</real>
 		</dict>
+		<dict>
+			<key>Type</key>
+			<string>PSGroupSpecifier</string>
+			<key>Title</key>
+			<string>Date Display</string>
+		</dict>
+		<dict>
+			<key>Type</key>
+			<string>PSToggleSwitchSpecifier</string>
+			<key>Title</key>
+			<string>Show Date</string>
+			<key>Key</key>
+			<string>showsDate</string>
+			<key>DefaultValue</key>
+			<true/>
+		</dict>
+		<dict>
+			<key>Type</key>
+			<string>PSSliderSpecifier</string>
+			<key>Title</key>
+			<string>Date Font Size</string>
+			<key>Key</key>
+			<string>dateFontSize</string>
+			<key>DefaultValue</key>
+			<real>10</real>
+			<key>MinimumValue</key>
+			<real>6</real>
+			<key>MaximumValue</key>
+			<real>30</real>
+		</dict>
+		<dict>
+			<key>Type</key>
+			<string>PSTextFieldSpecifier</string>
+			<key>Title</key>
+			<string>Date Format</string>
+			<key>Key</key>
+			<string>dateFormat</string>
+			<key>DefaultValue</key>
+			<string>yy.MM.dd.E</string>
+			<key>AutocapitalizationType</key>
+			<integer>0</integer>
+			<key>AutocorrectionType</key>
+			<integer>1</integer>
+		</dict>
+		<dict>
+			<key>Type</key>
+			<string>PSSliderSpecifier</string>
+			<key>Title</key>
+			<string>Date Offset X</string>
+			<key>Key</key>
+			<string>dateOffsetX</string>
+			<key>DefaultValue</key>
+			<real>0</real>
+			<key>MinimumValue</key>
+			<real>-200</real>
+			<key>MaximumValue</key>
+			<real>200</real>
+		</dict>
+		<dict>
+			<key>Type</key>
+			<string>PSSliderSpecifier</string>
+			<key>Title</key>
+			<string>Date Offset Y</string>
+			<key>Key</key>
+			<string>dateOffsetY</string>
+			<key>DefaultValue</key>
+			<real>0</real>
+			<key>MinimumValue</key>
+			<real>-200</real>
+			<key>MaximumValue</key>
+			<real>200</real>
+		</dict>
 	</array>
 </dict>
 </plist>

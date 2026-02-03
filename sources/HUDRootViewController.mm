@@ -107,6 +107,7 @@ static const double HUD_MAX_FONT_SIZE = 10.0;
 static const double HUD_MIN_CORNER_RADIUS = 4.5;
 static const double HUD_MAX_CORNER_RADIUS = 5.0;
 static double HUD_FONT_SIZE = 8.0;
+static double HUD_DATE_FONT_SIZE = 10.0;
 static UIFontWeight HUD_FONT_WEIGHT = UIFontWeightRegular;
 static CGFloat HUD_INACTIVE_OPACITY = 0.667;
 static uint8_t HUD_DATA_UNIT = 0;
@@ -429,7 +430,10 @@ static const CACornerMask kCornerMaskAll = kCALayerMinXMinYCorner | kCALayerMaxX
     UIVisualEffectView *_blurView;
     ScreenshotInvisibleContainer *_containerView;
     UIView *_contentView;
+    UIView *_dateContentView;
+    UIVisualEffectView *_dateBlurView;
     HUDBackdropLabel *_speedLabel;
+    HUDBackdropLabel *_dateLabel;
     UIImageView *_lockedView;
     NSTimer *_timer;
     UITapGestureRecognizer *_tapGestureRecognizer;
@@ -441,6 +445,8 @@ static const CACornerMask kCornerMaskAll = kCALayerMinXMinYCorner | kCALayerMaxX
     NSLayoutConstraint *_centerXConstraint;
     NSLayoutConstraint *_leadingConstraint;
     NSLayoutConstraint *_trailingConstraint;
+    NSLayoutConstraint *_dateTopConstraint;
+    NSLayoutConstraint *_dateCenterXConstraint;
     UIInterfaceOrientation _orientation;
     FBSOrientationObserver *_orientationObserver;
 }
@@ -478,6 +484,11 @@ static const CACornerMask kCornerMaskAll = kCALayerMinXMinYCorner | kCALayerMaxX
     [userDefaults addObserver:self forKeyPath:HUDUserDefaultsKeyUsesCustomOffset options:NSKeyValueObservingOptionNew context:nil];
     [userDefaults addObserver:self forKeyPath:HUDUserDefaultsKeyRealCustomOffsetX options:NSKeyValueObservingOptionNew context:nil];
     [userDefaults addObserver:self forKeyPath:HUDUserDefaultsKeyRealCustomOffsetY options:NSKeyValueObservingOptionNew context:nil];
+    [userDefaults addObserver:self forKeyPath:HUDUserDefaultsKeyShowsDate options:NSKeyValueObservingOptionNew context:nil];
+    [userDefaults addObserver:self forKeyPath:HUDUserDefaultsKeyDateFontSize options:NSKeyValueObservingOptionNew context:nil];
+    [userDefaults addObserver:self forKeyPath:HUDUserDefaultsKeyDateOffsetX options:NSKeyValueObservingOptionNew context:nil];
+    [userDefaults addObserver:self forKeyPath:HUDUserDefaultsKeyDateOffsetY options:NSKeyValueObservingOptionNew context:nil];
+    [userDefaults addObserver:self forKeyPath:HUDUserDefaultsKeyDateFormat options:NSKeyValueObservingOptionNew context:nil];
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
@@ -485,7 +496,12 @@ static const CACornerMask kCornerMaskAll = kCALayerMinXMinYCorner | kCALayerMaxX
         [keyPath isEqualToString:HUDUserDefaultsKeyRealCustomFontSize] ||
         [keyPath isEqualToString:HUDUserDefaultsKeyUsesCustomOffset] ||
         [keyPath isEqualToString:HUDUserDefaultsKeyRealCustomOffsetX] ||
-        [keyPath isEqualToString:HUDUserDefaultsKeyRealCustomOffsetY])
+        [keyPath isEqualToString:HUDUserDefaultsKeyRealCustomOffsetY] ||
+        [keyPath isEqualToString:HUDUserDefaultsKeyShowsDate] ||
+        [keyPath isEqualToString:HUDUserDefaultsKeyDateFontSize] ||
+        [keyPath isEqualToString:HUDUserDefaultsKeyDateOffsetX] ||
+        [keyPath isEqualToString:HUDUserDefaultsKeyDateOffsetY] ||
+        [keyPath isEqualToString:HUDUserDefaultsKeyDateFormat])
     {
         [self reloadUserDefaults];
     }
@@ -534,12 +550,19 @@ static const CACornerMask kCornerMaskAll = kCALayerMinXMinYCorner | kCALayerMaxX
         [_blurView.layer setCornerRadius:realCustomFontSize / 2.0];
     }
 
+    HUD_DATE_FONT_SIZE = MAX([self dateFontSize], 4);
+    [_dateLabel setFont:[UIFont systemFontOfSize:HUD_DATE_FONT_SIZE]];
+    [_dateContentView setHidden:![self showsDate]];
+
     BOOL usesInvertedColor = [self usesInvertedColor];
     HUD_FONT_WEIGHT = (usesInvertedColor ? UIFontWeightMedium : UIFontWeightRegular);
     HUD_INACTIVE_OPACITY = (usesInvertedColor ? 1.0 : 0.667);
     [_blurView setEffect:(usesInvertedColor ? nil : _blurEffect)];
     [_speedLabel setColorInvertEnabled:usesInvertedColor];
     [_lockedView setHidden:usesInvertedColor];
+    [_dateLabel setColorInvertEnabled:usesInvertedColor];
+    [_dateBlurView setEffect:(usesInvertedColor ? nil : _blurEffect)];
+    _dateBlurView.layer.cornerRadius = HUD_DATE_FONT_SIZE / 2.0;
 
     BOOL hideAtSnapshot = [self hideAtSnapshot];
     if (hideAtSnapshot) {
@@ -733,6 +756,50 @@ static const CACornerMask kCornerMaskAll = kCALayerMinXMinYCorner | kCALayerMaxX
     return [GetStandardUserDefaults() doubleForKey:HUDUserDefaultsKeyRealCustomOffsetY];
 }
 
+- (BOOL)showsDate {
+    NSDictionary *extraUserDefaults = [self extraUserDefaultsDictionary];
+    if (extraUserDefaults) {
+        return [extraUserDefaults[HUDUserDefaultsKeyShowsDate] boolValue];
+    }
+    return [GetStandardUserDefaults() boolForKey:HUDUserDefaultsKeyShowsDate];
+}
+
+- (CGFloat)dateFontSize {
+    NSDictionary *extraUserDefaults = [self extraUserDefaultsDictionary];
+    if (extraUserDefaults) {
+        return [extraUserDefaults[HUDUserDefaultsKeyDateFontSize] doubleValue];
+    }
+    return [GetStandardUserDefaults() doubleForKey:HUDUserDefaultsKeyDateFontSize];
+}
+
+- (CGFloat)dateOffsetX {
+    NSDictionary *extraUserDefaults = [self extraUserDefaultsDictionary];
+    if (extraUserDefaults) {
+        return [extraUserDefaults[HUDUserDefaultsKeyDateOffsetX] doubleValue];
+    }
+    return [GetStandardUserDefaults() doubleForKey:HUDUserDefaultsKeyDateOffsetX];
+}
+
+- (CGFloat)dateOffsetY {
+    NSDictionary *extraUserDefaults = [self extraUserDefaultsDictionary];
+    if (extraUserDefaults) {
+        return [extraUserDefaults[HUDUserDefaultsKeyDateOffsetY] doubleValue];
+    }
+    return [GetStandardUserDefaults() doubleForKey:HUDUserDefaultsKeyDateOffsetY];
+}
+
+- (NSString *)dateFormat {
+    NSDictionary *extraUserDefaults = [self extraUserDefaultsDictionary];
+    if (extraUserDefaults) {
+        NSString *format = extraUserDefaults[HUDUserDefaultsKeyDateFormat];
+        if (format.length > 0) {
+            return format;
+        }
+    }
+    NSString *format = [GetStandardUserDefaults() stringForKey:HUDUserDefaultsKeyDateFormat];
+    return format.length > 0 ? format : @"yy.MM.dd.E";
+}
+
 - (instancetype)init
 {
     self = [super init];
@@ -764,6 +831,33 @@ static const CACornerMask kCornerMaskAll = kCALayerMinXMinYCorner | kCALayerMaxX
         [_speedLabel setAttributedText:attributedText];
     }
     [_speedLabel sizeToFit];
+    [self updateDateLabel];
+}
+
+- (void)updateDateLabel
+{
+    if (![self showsDate]) {
+        [_dateContentView setHidden:YES];
+        return;
+    }
+
+    [_dateContentView setHidden:NO];
+
+    static NSDateFormatter *dateFormatter = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        dateFormatter = [[NSDateFormatter alloc] init];
+    });
+
+    dateFormatter.dateFormat = [self dateFormat];
+
+    NSString *dateText = [dateFormatter stringFromDate:[NSDate date]];
+    NSDictionary *attributes = @{
+        NSFontAttributeName: [UIFont monospacedDigitSystemFontOfSize:HUD_DATE_FONT_SIZE weight:HUD_FONT_WEIGHT],
+    };
+    [_dateLabel setAttributedText:[[NSAttributedString alloc] initWithString:dateText attributes:attributes]];
+    [_dateLabel sizeToFit];
+    _dateContentView.alpha = _isFocused ? 1.0 : HUD_INACTIVE_OPACITY;
 }
 
 - (void)viewDidLoad
@@ -775,6 +869,11 @@ static const CACornerMask kCornerMaskAll = kCALayerMinXMinYCorner | kCALayerMaxX
     _contentView.backgroundColor = [UIColor clearColor];
     _contentView.translatesAutoresizingMaskIntoConstraints = NO;
     [self.view addSubview:_contentView];
+
+    _dateContentView = [[UIView alloc] init];
+    _dateContentView.backgroundColor = [UIColor clearColor];
+    _dateContentView.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.view addSubview:_dateContentView];
 
     _blurEffect = [UIBlurEffect effectWithStyle:UIBlurEffectStyleDark];
     _blurView = [[UIVisualEffectView alloc] initWithEffect:_blurEffect];
@@ -793,6 +892,21 @@ static const CACornerMask kCornerMaskAll = kCALayerMinXMinYCorner | kCALayerMaxX
     _speedLabel.translatesAutoresizingMaskIntoConstraints = NO;
     [_speedLabel setContentHuggingPriority:UILayoutPriorityDefaultHigh forAxis:UILayoutConstraintAxisVertical];
     [_blurView.contentView addSubview:_speedLabel];
+
+    _dateBlurView = [[UIVisualEffectView alloc] initWithEffect:_blurEffect];
+    _dateBlurView.layer.cornerRadius = HUD_MIN_CORNER_RADIUS;
+    _dateBlurView.layer.masksToBounds = YES;
+    _dateBlurView.translatesAutoresizingMaskIntoConstraints = NO;
+    [_dateContentView addSubview:_dateBlurView];
+
+    _dateLabel = [[HUDBackdropLabel alloc] initWithFrame:CGRectZero];
+    _dateLabel.numberOfLines = 1;
+    _dateLabel.textAlignment = NSTextAlignmentCenter;
+    _dateLabel.textColor = [UIColor whiteColor];
+    _dateLabel.font = [UIFont systemFontOfSize:HUD_DATE_FONT_SIZE];
+    _dateLabel.translatesAutoresizingMaskIntoConstraints = NO;
+    [_dateLabel setContentHuggingPriority:UILayoutPriorityDefaultHigh forAxis:UILayoutConstraintAxisVertical];
+    [_dateBlurView.contentView addSubview:_dateLabel];
 
     _lockedView = [[UIImageView alloc] initWithImage:[UIImage systemImageNamed:@"lock.fill"]];
     _lockedView.tintColor = [UIColor whiteColor];
@@ -998,6 +1112,26 @@ static const CACornerMask kCornerMaskAll = kCALayerMinXMinYCorner | kCALayerMaxX
         [_blurView.leadingAnchor constraintEqualToAnchor:_speedLabel.leadingAnchor constant:-4],
         [_blurView.trailingAnchor constraintEqualToAnchor:_speedLabel.trailingAnchor constant:4],
         [_blurView.bottomAnchor constraintEqualToAnchor:_speedLabel.bottomAnchor constant:2],
+    ]];
+
+    CGFloat dateOffsetX = [self dateOffsetX];
+    CGFloat dateOffsetY = [self dateOffsetY];
+    CGFloat dateTopConstant = 10.0 + dateOffsetY;
+
+    _dateTopConstraint = [_dateContentView.topAnchor constraintEqualToAnchor:layoutGuide.topAnchor constant:dateTopConstant];
+    _dateCenterXConstraint = [_dateContentView.centerXAnchor constraintEqualToAnchor:layoutGuide.centerXAnchor constant:dateOffsetX];
+
+    [_constraints addObjectsFromArray:@[
+        _dateTopConstraint,
+        _dateCenterXConstraint,
+        [_dateLabel.topAnchor constraintEqualToAnchor:_dateContentView.topAnchor],
+        [_dateLabel.bottomAnchor constraintEqualToAnchor:_dateContentView.bottomAnchor],
+        [_dateLabel.leadingAnchor constraintEqualToAnchor:_dateContentView.leadingAnchor],
+        [_dateLabel.trailingAnchor constraintEqualToAnchor:_dateContentView.trailingAnchor],
+        [_dateBlurView.topAnchor constraintEqualToAnchor:_dateLabel.topAnchor constant:-2],
+        [_dateBlurView.leadingAnchor constraintEqualToAnchor:_dateLabel.leadingAnchor constant:-4],
+        [_dateBlurView.trailingAnchor constraintEqualToAnchor:_dateLabel.trailingAnchor constant:4],
+        [_dateBlurView.bottomAnchor constraintEqualToAnchor:_dateLabel.bottomAnchor constant:2],
     ]];
 
     [_constraints addObjectsFromArray:@[

@@ -8,4 +8,11 @@
 
 "Uses Custom Offset" = "Uses Custom Offset";
 
+"Date Display" = "Date Display";
+"Show Date" = "Show Date";
+"Date Font Size" = "Date Font Size";
+"Date Format" = "Date Format";
+"Date Offset X" = "Date Offset X";
+"Date Offset Y" = "Date Offset Y";
+
 "Reset to Default" = "Reset to Default";
